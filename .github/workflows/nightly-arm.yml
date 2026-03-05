@@ -1,0 +1,39 @@
+name: Nightly Release
+
+on:
+  workflow_dispatch: 
+  push:
+    branches:
+    - 'main'
+    paths-ignore:
+      - '.gitignore'
+      - '*.md'
+      - '.github/*.md'
+
+jobs:
+  build:
+    name: Build WindowsArm
+    runs-on: windows-11-arm
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Build
+      run: MSBuild.exe MinecraftConsoles.sln /p:Configuration=Release /p:Platform="ARM64EC"
+
+    - name: Zip Build
+      run: 7z a -r LCEWindowsARM.zip ./ARM64EC/Release/*
+
+    - name: Update release
+      uses: andelf/nightly-release@main
+
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: nightly
+        name: Nightly Release
+        files: LCEWindowsARM.zip
